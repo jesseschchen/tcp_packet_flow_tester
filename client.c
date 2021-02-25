@@ -46,10 +46,8 @@ int send_packets(int socket_fd, int buf_size) {
 	void* buf = malloc(buf_size);
 
 	size_t pack_id = 0;
-	printf("sizeof(size_t): %li\n", sizeof(pack_id));
 
 	for (; ; pack_id++) {
-		printf("packet_id: %li\n", pack_id);
 		memcpy(buf, &pack_id, sizeof(size_t));
 		if (send(socket_fd, buf, buf_size, 0) != buf_size) {
 			perror("send()");
