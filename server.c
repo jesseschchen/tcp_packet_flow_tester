@@ -19,7 +19,7 @@ typedef struct file_info {
 void recv_forever(int connection_fd, int buf_size) {
 	void* buf = malloc(buf_size);
 	while(recv(connection_fd, buf, buf_size, 0) > 0) {
-		printf("received packet_id: %ln\n", (size_t*)buf);
+		printf("received packet_id: %li\n", *(size_t*)buf);
 	}
 }
 
