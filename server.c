@@ -7,20 +7,27 @@
 #include <stdio.h> 		// sprintf()
 #include <arpa/inet.h>	// inet_addr()
 #include <string.h> 	// memcpy(), strlen()
+#include <time.h> 		// clock()
 
 #define BUF_SIZE 2048
 #define MAX_CLIENTS 20
 
-typedef struct file_info {
-	char* filename;
-	int size;
-} file_info;
+
 
 void recv_forever(int connection_fd, int buf_size) {
 	void* buf = malloc(buf_size);
-	while(recv(connection_fd, buf, buf_size, 0) > 0) {
+	size_t total = 0;
+	int recvd;
+	clock_t start_time = clock();
+	while((recvd = recv(connection_fd, buf, buf_size, 0)) > 0) {
 		printf("received packet_id: %li\n", *(size_t*)buf);
+		total += recvd;
 	}
+	double run_time = (double)(clock() - start_time) / CLOCKS_PER_SEC;
+
+
+	printf("total received: %li\n", total);
+	printf("average throughput(Mbps): %f\n", (total*8/(1000000))/run_time);
 }
 
 
@@ -32,7 +39,6 @@ void open_server(int port, int buf_size) {
 	int recvd_file_size;
 	struct sockaddr_in address;
 	int addrlen = sizeof(address);
-	file_info received_file;
 
 
 	// opens a socket
