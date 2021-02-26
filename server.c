@@ -24,9 +24,13 @@ void recv_forever(int connection_fd, int buf_size) {
 		total += recvd;
 	}
 	double run_time = (double)(clock() - start_time) / CLOCKS_PER_SEC;
-
+	clock_t clock_time = clock() - start_time;
 
 	printf("total received: %li\n", total);
+	printf("run_time: %f\n", run_time);
+	printf("cps: %li\n", CLOCKS_PER_SEC);
+	printf("clock_time: %li\n", clock_time);
+
 	printf("average throughput(Mbps): %f\n", (total*8/(1000000))/run_time);
 }
 
