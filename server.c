@@ -18,18 +18,17 @@ void recv_forever(int connection_fd, int buf_size) {
 	void* buf = malloc(buf_size);
 	long total = 0;
 	int recvd;
-	clock_t start_time = clock();
+	struct timespec start, end;
+	clock_gettime(CLOCK_MONOTONIC, &start);
 	while((recvd = recv(connection_fd, buf, buf_size, 0)) > 0) {
 		//printf("received packet_id: %li\n", *(size_t*)buf);
 		total += recvd;
 	}
-	double run_time = (double)(clock() - start_time) / CLOCKS_PER_SEC;
-	clock_t clock_time = clock() - start_time;
+	clock_gettime(CLOCK_MONOTONIC, &end);
+	double run_time = (end.tv_sec - start.tv_sec) + 1e-9*(end.tv_nsec - start.tv_nsec);
 
 	printf("total received: %li\n", total);
 	printf("run_time: %f\n", run_time);
-	printf("cps: %li\n", CLOCKS_PER_SEC);
-	printf("clock_time: %li\n", clock_time);
 
 	printf("average throughput(Mbps): %f\n", (total*8/(1000000))/run_time);
 }
