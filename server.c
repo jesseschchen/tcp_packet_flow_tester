@@ -16,11 +16,11 @@
 
 void recv_forever(int connection_fd, int buf_size) {
 	void* buf = malloc(buf_size);
-	size_t total = 0;
+	long total = 0;
 	int recvd;
 	clock_t start_time = clock();
 	while((recvd = recv(connection_fd, buf, buf_size, 0)) > 0) {
-		printf("received packet_id: %li\n", *(size_t*)buf);
+		//printf("received packet_id: %li\n", *(size_t*)buf);
 		total += recvd;
 	}
 	double run_time = (double)(clock() - start_time) / CLOCKS_PER_SEC;
