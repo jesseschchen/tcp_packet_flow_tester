@@ -39,7 +39,6 @@ void recv_forever(int connection_fd, int buf_size) {
 // receives connections until user hits ctrl-c
 void open_server(int port, int buf_size) {
 	int server_fd, connection_fd;
-	int recvd_file_size;
 	struct sockaddr_in address;
 	int addrlen = sizeof(address);
 
@@ -73,17 +72,70 @@ void open_server(int port, int buf_size) {
 }
 
 
+void recv_udp_forever(int server_fd, int buf_size) {
+	void* buf = malloc(buf_size);
+	long total = 0;
+	int recvd;
+	struct timespec start, end;
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	while((recvd = recvfrom(server_fd, buf, buf_size, 0, NULL, NULL)) > 0) {
+		// printf("received packet_id: %li\n", *(size_t*)buf);
+		total += recvd;
+	}
+	clock_gettime(CLOCK_MONOTONIC, &end);
+	double run_time = (end.tv_sec - start.tv_sec) + 1e-9*(end.tv_nsec - start.tv_nsec);
+
+	printf("total received: %li\n", total);
+	printf("run_time: %f\n", run_time);
+
+	printf("average throughput(Mbps): %f\n", (total*8/(1000000))/run_time);
+}
+
+
+
+void open_udp_server(int port, int buf_size) {
+	int server_fd;
+	struct sockaddr_in address;
+	int addrlen = sizeof(address);
+
+
+	// opens a socket
+	server_fd = socket(AF_INET, SOCK_DGRAM, 0);
+	perror("socket");
+
+	// initializes a sockaddr_in structure to listen on 
+	address.sin_family = AF_INET; // IPv4
+	address.sin_addr.s_addr = htonl(INADDR_ANY); // binds to all available interfaces
+	address.sin_port = htons(port); // converts from host to network byte order
+
+	// binds server_fd to a specific sockaddr_in
+	int enable = 1;
+	setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int));
+	bind(server_fd, (struct sockaddr*)&address, sizeof(address));
+	perror("bind");
+
+	recv_udp_forever(server_fd, buf_size); // receives receives on this socket forever(theoretically)
+}
+
 
 // ./tcp_server <port> 
 int main(int argc, char* argv[]) {
-	if (argc != 3) {
-	 	fprintf(stderr, "usage: ./tcp_server <port> <buf_size>\n");
+	if (argc != 4) {
+	 	fprintf(stderr, "usage: ./tcp_server <port> <buf_size> <tcp>\n");
 	 	exit(1);
 	}
 
 
 	int port = atoi(argv[1]);
 	int buf_size = atoi(argv[2]);
-
-	open_server(port, buf_size);
+	int tcp = atoi(argv[3]);	
+	
+	if (tcp) {
+		printf("TCP\n");
+		open_server(port, buf_size);
+	}
+	else {
+		printf("UDP\n");
+		open_udp_server(port, buf_size);
+	}
 }

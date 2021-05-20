@@ -48,16 +48,54 @@ int send_packets(int socket_fd, int buf_size, int delay_us) {
 		if (send(socket_fd, buf, buf_size, 0) != buf_size) {
 			perror("send()");
 		}
-		
+
 		if (delay_us != 0)
 			usleep(delay_us);
 	}
 }
 
+void send_udp_packets(char* server_ip, int port, int buf_size, int delay_us) {
+	int socket_fd;
+	struct sockaddr_in address;
+
+	// opens a socket 
+	socket_fd = socket(AF_INET, SOCK_DGRAM, 0);
+	perror("socket");
+
+	// no need to bind because client doesn't care what port it's on
+
+	// initializes a sockaddr_in structure to connect to
+	address.sin_family = AF_INET; // IPv4
+	address.sin_addr.s_addr = inet_addr(server_ip); // converts ip from char* to binary
+	address.sin_port = htons(port); // converts from host to network byte order
+
+
+
+	void* buf = malloc(buf_size);
+	size_t pack_id = 0;
+
+	for (; ; pack_id++) {
+		//printf("packet_id: %li\n", pack_id);
+		memcpy(buf, &pack_id, sizeof(size_t));
+		if (sendto(socket_fd, buf, buf_size, 0, (const struct sockaddr*)&address, sizeof(address)) != buf_size) {
+			perror("send()");
+		}
+
+		if (delay_us != 0)
+			usleep(delay_us);
+	}
+
+	close(socket_fd);
+
+}
+
+
+
+
 // ./tcp_client <server_ip> <port> <filename>
 int main(int argc, char* argv[]) {
-	if (argc != 5){
-		fprintf(stderr, "usage: %s <server_ip_address> <port> <buf_size> <delay_uS>\n", argv[0]);
+	if (argc != 6){
+		fprintf(stderr, "usage: %s <server_ip_address> <port> <buf_size> <delay_us> <tcp>\n", argv[0]);
 		exit(1);
 	}
 
@@ -65,15 +103,24 @@ int main(int argc, char* argv[]) {
 	int port = atoi(argv[2]);  // port number
 	int buf_size = atoi(argv[3]);  // packet size
 	int delay_us = atoi(argv[4]);  // interpacket gap
-
-	// opens connection to server_ip:port
-	int socket_fd = open_tcp_connection(server_ip, port);
-
-	// starts sending packets forever
-	send_packets(socket_fd, buf_size, delay_us);
+	int tcp = atoi(argv[5]);       // tcp or udp - 1 for tcp
 
 
+	if (tcp) {
+		printf("TCP\n");
+		// opens connection to server_ip:port
+		int socket_fd = open_tcp_connection(server_ip, port);
+		// starts sending packets forever
+		send_packets(socket_fd, buf_size, delay_us);
+		close(socket_fd);
+	}
+	else {
+		printf("UDP\n");
+		send_udp_packets(server_ip, port, buf_size, delay_us);
+	}
 
-	close(socket_fd);
+
+
+
 
 }
