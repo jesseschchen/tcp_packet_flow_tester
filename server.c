@@ -45,11 +45,8 @@ void open_server(int port, int buf_size) {
 
 
 	// opens a socket
-	if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		perror("failed to create socket");
-		exit(1);
-	}
-	printf("created socket!\n");
+	server_fd = socket(AF_INET, SOCK_STREAM, 0);
+	perror("socket");
 
 	// initializes a sockaddr_in structure to listen on 
 	address.sin_family = AF_INET; // IPv4
@@ -59,28 +56,19 @@ void open_server(int port, int buf_size) {
 	// binds server_fd to a specific sockaddr_in
 	int enable = 1;
 	setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int));
-	if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0) {
-		fprintf(stderr, "unable to bind to port %i\n", port);
-		exit(1);
-	}
-	printf("bound socket to port %i\n", port);
+	bind(server_fd, (struct sockaddr*)&address, sizeof(address));
+	perror("bind");
 
 	// listen for new connections on the created/bound socket
 	// ** waits for TCP SYNs
-	if (listen(server_fd, MAX_CLIENTS) < 0) {
-		perror("listen failed");
-		exit(1);
-	}
-	printf("listening...\n");
+	listen(server_fd, MAX_CLIENTS);
+	perror("listen");
 
 	// accepts 1 connection 
 	printf("\n");
 	// accept TCP connection
-	if ((connection_fd = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen)) < 0) {
-		fprintf(stderr, "failed to accept connection on port %i\n", port);
-		exit(1);
-	}
-	printf("accepted connection!\n");\
+	connection_fd = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
+	perror("accept");
 	recv_forever(connection_fd, buf_size); // receives receives on this socket forever(theoretically)
 }
 

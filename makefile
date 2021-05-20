@@ -14,12 +14,15 @@ default: server.c client.c
 
 client: client.c
 	@echo "building client..."
-	@$(CC) -o tcp_client client.c 
-	@chmod +x tcp_client
+	@$(CC) -o client client.c 
+	@chmod +x client
 	@echo "finished building client"
 
 server: server.c
 	@echo "buildling server.."
-	@$(CC) -o tcp_server server.c
-	@chmod +x tcp_server
+	@$(CC) -o server server.c
+	@chmod +x server
 	@echo "finished building server"
+
+clean: 
+	rm -f client server

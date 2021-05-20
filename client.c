@@ -16,11 +16,8 @@ int open_tcp_connection(char* server_ip, int port) {
 	struct sockaddr_in address;
 
 	// opens a socket 
-	if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		perror("failed to create socket");
-		exit(1);
-	}
-	printf("created socket!\n");
+	socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+	perror("socket");
 
 	// no need to bind because client doesn't care what port it's on
 
@@ -30,10 +27,8 @@ int open_tcp_connection(char* server_ip, int port) {
 	address.sin_port = htons(port); // converts from host to network byte order
 
 	// attempt to connect to <server_ip>:<port>
-	if (connect(socket_fd, (struct sockaddr*)&address, sizeof(address)) < 0) {
-		fprintf(stderr, "failed to connect to %s:%i\n", server_ip, port);
-		exit(1);
-	}
+	connect(socket_fd, (struct sockaddr*)&address, sizeof(address));
+	perror("connect");
 	printf("successfully connected to %s:%i\n", server_ip, port);
 
 	// returns socket file descriptor
@@ -42,7 +37,7 @@ int open_tcp_connection(char* server_ip, int port) {
 
 
 // infinite loops and sends packets until killed
-int send_packets(int socket_fd, int buf_size) {
+int send_packets(int socket_fd, int buf_size, int delay_us) {
 	void* buf = malloc(buf_size);
 
 	size_t pack_id = 0;
@@ -53,25 +48,29 @@ int send_packets(int socket_fd, int buf_size) {
 		if (send(socket_fd, buf, buf_size, 0) != buf_size) {
 			perror("send()");
 		}
+		
+		if (delay_us != 0)
+			usleep(delay_us);
 	}
 }
 
 // ./tcp_client <server_ip> <port> <filename>
 int main(int argc, char* argv[]) {
-	if (argc != 4){
-		fprintf(stderr, "usage: %s <server_ip_address> <port> <buf_size> \n", argv[0]);
+	if (argc != 5){
+		fprintf(stderr, "usage: %s <server_ip_address> <port> <buf_size> <delay_uS>\n", argv[0]);
 		exit(1);
 	}
 
 	char* server_ip = argv[1]; // server ip
 	int port = atoi(argv[2]);  // port number
-	int buf_size = atoi(argv[3]);  // filename to transfer
+	int buf_size = atoi(argv[3]);  // packet size
+	int delay_us = atoi(argv[4]);  // interpacket gap
 
 	// opens connection to server_ip:port
 	int socket_fd = open_tcp_connection(server_ip, port);
 
 	// starts sending packets forever
-	send_packets(socket_fd, buf_size);
+	send_packets(socket_fd, buf_size, delay_us);
 
 
 
